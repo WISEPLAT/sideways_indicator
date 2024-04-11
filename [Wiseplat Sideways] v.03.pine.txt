@@ -1,0 +1,103 @@
+// © Developer: Oleg Shpagin 
+// Telegram: https://t.me/OlegSh777
+// Github: https://github.com/WISEPLAT
+// YouTube: https://www.youtube.com/@wiseplat
+//@version=5
+indicator('[Wiseplat Sideways] v.03'
+  , overlay = true
+  , max_labels_count = 500
+  , max_lines_count = 500
+  , max_boxes_count = 500
+  , max_bars_back = 500)
+
+securityNoRepaint(sym, tf, src) =>
+    request.security(sym, tf, src[0])[0]
+
+gr01 = "Settings Sideway"
+
+bars_min_in_sideway      = input.int(5, "Min Bars In Sideway", minval=4, group=gr01, inline="2")
+bars_ext_for_sideway     = input.int(2, "Extend Bars For Sideway", minval=0, group=gr01, inline="3")
+percent_change_sideway   = input.float(2.0, "Percent Change To Form Sideway", minval=0.01, group=gr01, inline="4", step=0.01)
+recommended_settings     = input(true, "Use Recommended Settings For % per Timeframe", group=gr01, inline="5")
+
+if recommended_settings
+    float chartTFInMinutes = timeframe.in_seconds() / 60
+    percent_change_sideway := 0.05
+    if chartTFInMinutes == 1
+        percent_change_sideway := 0.1
+    if chartTFInMinutes == 5
+        percent_change_sideway := 0.1
+    if chartTFInMinutes == 10
+        percent_change_sideway := 0.15
+    if chartTFInMinutes == 15
+        percent_change_sideway := 0.25
+    if chartTFInMinutes == 30
+        percent_change_sideway := 0.5
+    if chartTFInMinutes == 45
+        percent_change_sideway := 0.7
+    if chartTFInMinutes == 60
+        percent_change_sideway := 0.75
+    if chartTFInMinutes == 120
+        percent_change_sideway := 1.0
+    if chartTFInMinutes == 180
+        percent_change_sideway := 1.1
+    if chartTFInMinutes == 240
+        percent_change_sideway := 1.25    
+    if chartTFInMinutes == 60 * 24
+        percent_change_sideway := 4.0
+    if chartTFInMinutes == 60 * 24 * 7
+        percent_change_sideway := 10.0
+    if chartTFInMinutes > 60 * 24 * 7
+        percent_change_sideway := 20.0
+
+sideway_color_box_fill   = input.color(color.new(#0000FF,90), title="Fill Sideways Boxes:", group=gr01, inline="6")
+sideway_color_box_border = input.color(color.new(color.gray,50), title="Contour:", group=gr01, inline="6")
+
+var is_new_sideway = false
+var int new_sideway_x = 0
+var float new_sideway_y = 0.0
+var float new_sideway_high = 0.0
+var box[] sideway_boxes = array.new_box()
+var box forming_sideway = box.new(left=0, right=0, top=0, bottom=0, bgcolor=sideway_color_box_fill, border_color=sideway_color_box_border)
+
+if bar_index > bars_min_in_sideway + 1
+
+    if is_new_sideway
+        bar_cur_mid_price = math.abs(open[0] - close[0]) / 2 + math.min(open[0], close[0])
+        pc = math.abs(100 - math.abs(new_sideway_y * 100 / bar_cur_mid_price))
+    
+        if pc > percent_change_sideway
+            _left = forming_sideway.get_left()
+            _right = forming_sideway.get_right()
+            _top = forming_sideway.get_top()
+            _bottom = forming_sideway.get_bottom()
+            array.push(sideway_boxes, box.new(left=_left, right=_right, top=_top, bottom=_bottom, bgcolor=sideway_color_box_fill, border_color=sideway_color_box_border))
+
+            forming_sideway.set_left(bar_index)
+            forming_sideway.set_right(bar_index)
+            forming_sideway.set_top(0)
+            forming_sideway.set_bottom(0)
+
+            is_new_sideway := false
+    
+        else
+            forming_sideway.set_left(new_sideway_x)
+            forming_sideway.set_right(bar_index+bars_ext_for_sideway)
+            forming_sideway.set_top(new_sideway_y+new_sideway_high)
+            forming_sideway.set_bottom(new_sideway_y-new_sideway_high)
+            forming_sideway.set_bgcolor(sideway_color_box_fill)
+            forming_sideway.set_border_color(sideway_color_box_border)
+
+    else        
+        bar_cur_mid_price = math.abs(open[0] - close[0]) / 2 + math.min(open[0], close[0])
+        is_new_sideway := true
+        for i = 1 to bars_min_in_sideway
+            bar_pre_mid_price = math.abs(open[i] - close[i]) / 2 + math.min(open[i], close[i])
+            pc = math.abs(100 - math.abs(bar_pre_mid_price * 100 / bar_cur_mid_price))
+            if pc > percent_change_sideway
+                is_new_sideway := false
+
+        if is_new_sideway
+            new_sideway_x := bar_index - bars_min_in_sideway
+            new_sideway_y := bar_cur_mid_price
+            new_sideway_high := bar_cur_mid_price * percent_change_sideway / 100
