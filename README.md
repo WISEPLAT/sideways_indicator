@@ -1,6 +1,6 @@
 The Sideway indicator for TradingView is a powerful tool designed to identify periods of sideways or ranging price action in the market. With its intuitive interface and customizable parameters, traders can easily spot when an asset is consolidating, providing valuable insights for both trend-following and range-bound strategies.
 
-https://www.tradingview.com/script/SV9cTRKQ-Wiseplat-Sideways-v-03/
+https://www.tradingview.com/script/U8a32uVP-Wiseplat-Sideways-v-04/
 
 This indicator utilizes really simple algorithm to analyze price movement and volatility, effectively filtering out noise and false signals. By plotting clear visual cues on the chart.
 
